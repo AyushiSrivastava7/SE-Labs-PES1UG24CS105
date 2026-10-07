@@ -4,6 +4,7 @@ import random
 from game.ship import Ship
 from game.meteor import Meteor
 from game.laser import Laser
+from game.shield_orb import ShieldOrb
 
 WIDTH,HEIGHT=700,520
 FPS=60
@@ -29,6 +30,9 @@ class GameEngine:
         self.score=0
         self.game_over=False
         self.started=False
+        self.shield_orbs = []
+        self.shield_active = False
+        self.shield_timer = 0
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -66,8 +70,29 @@ class GameEngine:
             self.timer = 0
             self.spawn_interval = max(20, self.spawn_interval - 0.3)
 
+        if random.randint(1, 600) == 1:
+            self.shield_orbs.append(ShieldOrb(WIDTH))
+
         for laser in self.lasers:
             laser.update()
+
+        for orb in self.shield_orbs:
+            orb.update()
+
+            if orb.collides(self.ship.rect):
+                self.shield_active = True
+                self.shield_timer = 600
+                orb.y = HEIGHT + 100
+
+        self.shield_orbs = [
+            orb for orb in self.shield_orbs
+            if not orb.off_screen(HEIGHT)
+        ]
+        if self.shield_active:
+            self.shield_timer -= 1
+
+            if self.shield_timer <= 0:
+                self.shield_active = False
 
         remaining_meteors = []
 
@@ -93,7 +118,12 @@ class GameEngine:
             meteor.update()
 
             if meteor.collides(self.ship.rect):
-                self.game_over = True
+                if self.shield_active:
+                    self.shield_active = False
+                    self.shield_timer = 0
+                    meteor.y = HEIGHT + 100
+                else:
+                    self.game_over = True
 
         self.meteors = [
             meteor for meteor in self.meteors
@@ -112,11 +142,22 @@ class GameEngine:
             pygame.draw.circle(self.screen,(200,200,220),(sx,sy),sr)
         for m in self.meteors:
             m.draw(self.screen)
-
+        for orb in self.shield_orbs:
+            orb.draw(self.screen)
         for laser in self.lasers:
             laser.draw(self.screen)
 
         self.ship.draw(self.screen)
+
+        if self.shield_active:
+            pygame.draw.circle(
+                self.screen,
+                (80, 220, 255),
+                self.ship.rect.center,
+                25,
+                2
+            )
+
         sc=self.font.render(f"Time: {self.score//60}s",True,(200,200,240))
         self.screen.blit(sc,(10,10))
         if not self.started:
