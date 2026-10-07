@@ -78,6 +78,10 @@ class GameEngine:
                 if laser.collides(meteor):
                     destroyed = True
                     laser.rect.y = -100
+
+                    fragments = meteor.split()
+                    remaining_meteors.extend(fragments)
+
                     break
 
             if not destroyed:
