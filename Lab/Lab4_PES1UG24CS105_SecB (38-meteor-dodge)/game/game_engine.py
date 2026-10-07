@@ -28,6 +28,7 @@ class GameEngine:
         self.timer=0
         self.spawn_interval=60
         self.score=0
+        self.multiplier=1
         self.game_over=False
         self.started=False
         self.shield_orbs = []
@@ -136,6 +137,7 @@ class GameEngine:
         ]
 
         self.score += 1
+        self.multiplier = self.score // 600 + 1
     def draw(self):
         self.screen.fill(BG)
         for sx,sy,sr in self.stars:
@@ -158,7 +160,7 @@ class GameEngine:
                 2
             )
 
-        sc=self.font.render(f"Time: {self.score//60}s",True,(200,200,240))
+        sc=self.font.render(f"Time: {self.score//60}s  Multiplier: {self.multiplier}x",True,(200,200,240))
         self.screen.blit(sc,(10,10))
         if not self.started:
             msg=self.font.render("Press SPACE to launch",True,(180,180,240))
